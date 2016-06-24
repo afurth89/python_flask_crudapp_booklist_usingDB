@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Edit This Book</h1>
+  <form action="{{url_for('update', id=book.id)}}?_method=PATCH" method="POST">
+    <input type="text" name="title" value="{{book.title}}" autofocus>
+    <input type="text" name="author" value="{{book.author}}">
+    <input type="submit" value="Update this Book">
+  </form>
+
+  <a href="{{url_for('index')}}">See All Books</a>
+{% endblock %}

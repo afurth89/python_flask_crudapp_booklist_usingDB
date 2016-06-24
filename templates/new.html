@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Add a New Book</h1>
+  <form action="{{url_for('create')}}" method="POST">
+    <input type="text" name="title" placeholder="title" autofocus>
+    <input type="text" name="author" placeholder="author">
+    <input type="submit" value="Add a Book">
+  </form>
+
+  <a href="{{url_for('index')}}">See All Books</a>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Book Info</h1>
+  <h3>Title: {{book.title}}</h3>
+  <h3>Author: {{book.author}}</h3>
+
+  <a href="{{url_for('edit', id=book.id)}}">Edit this book</a>
+  
+
+  <a href="{{url_for('index')}}">See All Books</a>
+
+{% endblock %}
