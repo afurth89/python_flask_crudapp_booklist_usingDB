@@ -15,19 +15,39 @@ from flask_modus import Modus
 
 # from models import Book
 
-class Book:
-  # Class property: accessible via Book.id or Book.book_list
-  id = 1
-  book_list = []
+
+# create 'app' module by passing __name__ to Flask class
+app = Flask(__name__)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://localhost/sqlalchemy_app'
+db = SQLAlchemy(app)
+
+
+class Book(db.Model):
+  # Creates table name is PostgreSQL DB
+  __tablename__ = 'books'
+
+  # Define columns in table
+  id = db.Column(db.Integer, primary_key=True)
+  title = db.Column(db.Text())
+  author = db.Column(db.Text())
+
+  # NON-DB CODE
+  # # Class property: accessible via Book.id or Book.book_list
+  # id = 1
+  # book_list = []
+
   # Every book should have title,author,id
   def __init__(self,title,author):
     self.title = title
     self.author = author
-    self.id = Book.id
-    # update 'book_list' class property
-    Book.book_list.append(self)
-    # increment id
-    Book.id += 1
+
+    # NON-DB CODE
+    # self.id = Book.id
+    # # update 'book_list' class property
+    # Book.book_list.append(self)
+    # # increment id
+    # Book.id += 1
 
   @classmethod
   # With 'classmethod' decorator, first parameter is always the class in which function resides
@@ -36,14 +56,21 @@ class Book:
   def find(cls, id):
     return [book for book in cls.book_list if book.id == id][0]
 
-# Seed some dummy data
-Book('Gatsby', 'Fitzy')
+  def __repr__(self):
+    return 'title {} - author {}'.format(self.title,self.author)
 
-# create 'app' module by passing __name__ to Flask class
-app = Flask(__name__)
+db.drop_all() # drop tables
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://localhost/sqlalchemy_app'
-db = SQLAlchemy(app)
+db.create_all() # create tables
+
+# See data
+cats_cradle = Book('cats cradle', 'kurt') # make a new instance/row
+harry_potter = Book('harry potter', 'jk') # make a new instance/row
+db.session.add(cats_cradle)
+db.session.add(harry_potter)
+# or db.session.add_all([cats_cradle, harry_potter])
+db.session.commit() # save to the DB
+ 
 
 # create module ('modus') by passing 'app' to class ('Modus')
 modus = Modus(app)
@@ -59,7 +86,8 @@ def root():
 
 @app.route('/books')
 def index():
-  return render_template('index.html', books=Book.book_list)
+  books = Book.query.all()
+  return render_template('index.html', books=books)
 
 # NEW
 @app.route('/books/new')
@@ -69,32 +97,37 @@ def new():
 # SHOW
 @app.route('/books/<int:id>')
 def show(id):
-  return render_template('show.html', book=Book.find(id))
+  return render_template('show.html', book=Book.query.get(id))
 
 # EDIT
 @app.route('/books/<int:id>/edit')
 def edit(id):
-  return render_template('edit.html', book=Book.find(id))
+  return render_template('edit.html', book=Book.query.get(id))
 
 # CREATE
 @app.route('/books', methods = ['POST'])
 def create():
-  Book(request.form['title'], request.form['author'])
+  new_book = Book(request.form['title'], request.form['author'])
+  db.session.add(new_book)
+  db.session.commit()
   return redirect(url_for('index'))
 
 # UPDATE
 @app.route('/books/<int:id>', methods = ['PATCH'])
 def update(id):
-  found_book = Book.find(id)
+  found_book = Book.query.get(id)
   found_book.title = request.form['title']
   found_book.author = request.form['author']
+  db.session.add(found_book)
+  db.session.commit()
   return redirect(url_for('index'))
 
 # DELETE
 @app.route('/books/<int:id>', methods = ['DELETE'])
 def destroy(id):
-  found_book = Book.find(id)
-  Book.book_list.remove(found_book)
+  found_book = Book.query.get(id)
+  db.session.delete(found_book)
+  db.session.commit()
   return redirect(url_for('index'))
 
 
